@@ -41,6 +41,7 @@ namespace FuseeApp
                     {
                         Components = new List<SceneComponent>
                         {
+                            
                             // TRANSFORM COMPONENT
                             _baseTransform,
 
@@ -48,7 +49,7 @@ namespace FuseeApp
                             ShaderCodeBuilder.MakeShaderEffect(new float4 (0.7f, 0.7f, 0.7f, 1)),
 
                             // MESH COMPONENT
-                            SimpleMeshes.CreateCuboid(new float3(10, 10, 10))
+                            SimpleMeshes.CreateCylinder(5, 10, 5)
                         }
                     },
                 }
@@ -72,14 +73,19 @@ namespace FuseeApp
         {
             SetProjectionAndViewport();
 
-            _baseTransform.Rotation = new float3(0, M.MinAngle(TimeSinceStart), 0);
+            float gegenstandx = _baseTransform.Rotation.x;
+            gegenstandx += 1.5f * DeltaTime * Keyboard.UpDownAxis;
+
+             float gegenstandy = _baseTransform.Rotation.y;
+            gegenstandy += 1.5f * DeltaTime * Keyboard.LeftRightAxis;
+            _baseTransform.Rotation = new float3(gegenstandx, gegenstandy,0);
 
             // Clear the backbuffer
             RC.Clear(ClearFlags.Color | ClearFlags.Depth);
 
             // Setup the camera 
             RC.View = float4x4.CreateTranslation(0, 0, 40) * float4x4.CreateRotationX(-(float) Math.Atan(15.0 / 40.0));
-
+            
             // Render the scene on the current render context
             _sceneRenderer.Render(RC);
 

@@ -22,6 +22,11 @@ namespace FuseeApp
         private SceneRendererForward _sceneRenderer;
         private float _camAngle = 0;
         private Transform _baseTransform;
+        private Transform _bodyTransform;
+        private Transform _upperArmTransform;
+        private Transform _foreArmTransform;
+        private Transform _kralleoben;
+        private Transform _kralleunten;
 
 
        SceneContainer CreateScene()
@@ -34,11 +39,42 @@ namespace FuseeApp
                 Translation = new float3(0, 0, 0)
             };
 
+            _bodyTransform = new Transform {
+                Rotation = new float3(0, 0, 0),
+                Scale = new float3(1, 1, 1),
+                Translation = new float3(0, 6, 0)
+            };
+
+            _upperArmTransform = new Transform{
+                Rotation = new float3(0, 0, 0),
+                Scale = new float3(1, 1, 1),
+                Translation = new float3(2, 4, 0)
+            };
+
+            _foreArmTransform = new Transform {
+                Rotation = new float3(0, 0, 0),
+                Scale = new float3(1, 1, 1),
+                Translation = new float3(-2, 4, 0)
+            };
+
+            _kralleoben = new Transform {
+                Rotation = new float3(0, 0, 0),
+                Scale = new float3(1, 1, 1),
+                Translation = new float3(1, 5, 0)
+            };
+
+             _kralleunten = new Transform {
+                Rotation = new float3(0, 0, 0),
+                Scale = new float3(1, 1, 1),
+                Translation = new float3(-1, 5, 0)
+            };
+
             // Setup the scene graph
             return new SceneContainer
             {
                 Children = new List<SceneNode>
                 {
+                    // Graue Basis
                     new SceneNode
                     {
                         Components = new List<SceneComponent>
@@ -47,15 +83,111 @@ namespace FuseeApp
                             _baseTransform,
 
                             // SHADER EFFECT COMPONENT
-                            ShaderCodeBuilder.MakeShaderEffect(new float4 (0.7f, 0.7f, 0.7f, 1)),
+                            ShaderCodeBuilder.MakeShaderEffect(new float4 (0.8f, 0.8f, 0.8f, 1)),
 
                             // MESH COMPONENT
                             SimpleMeshes.CreateCuboid(new float3(10, 2, 10))
                         }
-                    }
-                }
-            };
-        }
+                    },
+                    //Roter Körper
+                    new SceneNode {
+                        Components = new List<SceneComponent> 
+                        {
+                            _bodyTransform,
+
+                            ShaderCodeBuilder.MakeShaderEffect(new float4 (1, 0, 0, 1)),
+
+                            SimpleMeshes.CreateCuboid(new float3(2, 10, 2))
+                        },
+                        Children = new ChildList {
+
+                        //grün Oberarm
+                        new SceneNode {
+                            Components = new List<SceneComponent> {
+
+                                _upperArmTransform,
+                            },
+                            Children = new ChildList {
+                                new SceneNode {
+
+                                    Components = new List<SceneComponent>{
+
+                                    new Transform {
+                                        Rotation = new float3(0, 0, 0),
+                                        Scale = new float3(1, 1, 1),
+                                        Translation = new float3(0, 4, 0)
+                                    },
+                                    ShaderCodeBuilder.MakeShaderEffect(new float4(0, 1, 0, 1)),
+                                    SimpleMeshes.CreateCuboid(new float3(2, 10, 2))
+
+                                    },
+                                    Children = new ChildList {
+                                        // blauer Unterarm
+                                        new SceneNode {
+                                            Components = new List<SceneComponent> {
+
+                                                _foreArmTransform,
+
+                                                new Transform {
+                                                    Rotation = new float3(0, 0, 0),
+                                                    Scale = new float3(1, 1, 1),
+                                                    Translation = new float3(0, 4, 0)
+                                                },
+                                                ShaderCodeBuilder.MakeShaderEffect(new float4(0, 0, 1, 1)),
+                                                SimpleMeshes.CreateCuboid(new float3(2, 10, 2))
+                                            },
+                                            //Hand oben
+                                            Children = new ChildList {
+                                                new SceneNode {
+                                                    Components = new List<SceneComponent> {
+                                                        _kralleoben,
+                                                        },
+                                                        Children = new ChildList {
+                                                            new SceneNode {
+                                                                Components = new List<SceneComponent> {
+                                                                    new Transform {
+                                                                    Rotation = new float3(0, 0, 0),
+                                                                    Scale = new float3(1, 1, 1),
+                                                                    Translation = new float3(0, 1, 0) 
+                                                                },
+                                                                ShaderCodeBuilder.MakeShaderEffect(new float4(0, 1, 1, 1)),
+                                                                SimpleMeshes.CreateCuboid(new float3(1, 2, 1))
+                                                            }
+                                                        }                  
+                                                    }
+                                                }, 
+                                                  // Hand unten
+                                                    new SceneNode {
+                                                        Components = new List<SceneComponent> {
+                                                            _kralleunten,
+                                                         }, 
+
+                                                         Children = new ChildList {
+                                                             new SceneNode {
+                                                                 Components = new List<SceneComponent> {
+                                                                        new Transform {
+                                                                        Rotation = new float3(0, 0, 0),
+                                                                        Scale = new float3(1, 1, 1),
+                                                                        Translation = new float3(0, 1, 0)
+                                                                 },
+                                                                 
+                                                                ShaderCodeBuilder.MakeShaderEffect(new float4(0, 1, 1, 1)),
+                                                                SimpleMeshes.CreateCuboid(new float3(1, 2, 1))
+                                                             }
+                                                         }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                     }
+                 }
+            }
+        };
+    }
 
 
         // Init is called on startup. 
@@ -73,6 +205,38 @@ namespace FuseeApp
         // RenderAFrame is called once a frame
         public override void RenderAFrame()
         {
+            // Steuerung
+            float bodyRot = _bodyTransform.Rotation.y;
+            bodyRot += 2 * Keyboard.LeftRightAxis * DeltaTime;
+            _bodyTransform.Rotation = new float3(0, bodyRot, 0);
+
+            float upperArm = _upperArmTransform.Rotation.x;
+            upperArm += 2 * Keyboard.UpDownAxis * DeltaTime;
+            _upperArmTransform.Rotation = new float3(upperArm, 0, 0);
+
+            float underArm = _foreArmTransform.Rotation.x;
+            underArm += 2 * Keyboard.WSAxis * DeltaTime;
+            _foreArmTransform.Rotation = new float3(underArm, 0, 0);
+
+            // Kamera 
+            if (Mouse.LeftButton) {
+            _camAngle += 0.01f * Mouse.Velocity.x * DeltaTime; 
+            }
+
+            // Kralle unten
+            float kralleunten = _kralleunten.Rotation.z;
+            kralleunten += 2 * Keyboard.ADAxis * DeltaTime;
+            
+            // Kralle oben
+            float kralleoben = _kralleoben.Rotation.z;
+            kralleoben += -2* Keyboard.ADAxis * DeltaTime;
+
+            //Krallen beschränken
+            if( kralleoben < 0.206 & kralleoben > -1.509){
+                _kralleunten.Rotation = new float3(0, 0, kralleunten);
+                _kralleoben.Rotation = new float3(0,0, kralleoben); 
+            }
+
             SetProjectionAndViewport();
             
             // Clear the backbuffer

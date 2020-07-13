@@ -18,11 +18,63 @@ namespace FuseeApp
     [FuseeApplication(Name = "Tut08_FirstSteps", Description = "Yet another FUSEE App.")]
     public class Tut08_FirstSteps : RenderCanvas
     {
+        private SceneContainer _scene;
+        private SceneRendererForward _sceneRenderer;
+        private Transform _cubeTransform;  
+        private Transform _cubeTransform2;
+        private Transform _cubeTransform3;
+        private float _camAngle = 0;
+
         // Init is called on startup. 
         public override void Init()
         {
-            // Set the clear color for the backbuffer to "greenery" ;-) (https://store.pantone.com/de/de/color-of-the-year-2017/).
-            RC.ClearColor = new float4(136f/255f, 176f/255f, 75f/255f, 1);
+            // Set the clear color for the backbuffer to white (100% intensity in all color channels R, G, B, A).
+            RC.ClearColor = new float4(0.87f, 0.55f, 0.47f, 1);
+
+            // Create a scene with a cube
+            //The three components: one XForm, one Material and the Mesh
+            //cube 1
+            _cubeTransform = new Transform {Scale = new float3(2, 1, 1)};
+            var cubeShader = ShaderCodeBuilder.MakeShaderEffect(new float4 (1, 0, 0, 1));
+            var cubeMesh = SimpleMeshes.CreateCuboid(new float3(10, 10, 10));
+
+            //cube 2
+            _cubeTransform2 = new Transform {Scale = new float3(0.5f, 0.5f, 0.5f)};
+            var cubeShader2 = ShaderCodeBuilder.MakeShaderEffect(new float4 (0.87f, 0.87f, 0.87f, 1));
+            var cubeMesh2 = SimpleMeshes.CreateCuboid(new float3(10, 10, 10));
+
+            //cube 3
+            _cubeTransform3 = new Transform {Scale = new float3(1, 1, 1)};
+            var cubeShader3 = ShaderCodeBuilder.MakeShaderEffect(new float4 (0, 1, 1, 1));
+            var cubeMesh3 = SimpleMeshes.CreateCuboid(new float3(10, 5, 10));
+
+            // Assemble the cube node containing the three components
+            // cube 1
+            var cubeNode = new SceneNode();
+            cubeNode.Components.Add(_cubeTransform);
+            cubeNode.Components.Add(cubeShader);
+            cubeNode.Components.Add(cubeMesh);
+
+            //cube 2
+            var cubeNode2 = new SceneNode();
+            cubeNode2.Components.Add(_cubeTransform2);
+            cubeNode2.Components.Add(cubeShader2);
+            cubeNode2.Components.Add(cubeMesh2);
+
+            //cube 3
+            var cubeNode3 = new SceneNode();
+            cubeNode3.Components.Add(_cubeTransform3);
+            cubeNode3.Components.Add(cubeShader3);
+            cubeNode3.Components.Add(cubeMesh3);
+
+            // Create the scene containing the cube as the only object
+            _scene = new SceneContainer();
+            _scene.Children.Add(cubeNode);
+            _scene.Children.Add(cubeNode2);
+            _scene.Children.Add(cubeNode3);
+
+            // Create a scene renderer holding the scene above
+            _sceneRenderer = new SceneRendererForward(_scene);
         }
 
         // RenderAFrame is called once a frame
@@ -30,13 +82,32 @@ namespace FuseeApp
         {
             SetProjectionAndViewport();
 
-            // Clear the backbuffer
-            RC.Clear(ClearFlags.Color | ClearFlags.Depth);
+                // Clear the backbuffer
+                RC.Clear(ClearFlags.Color | ClearFlags.Depth);
 
+                // Animate the camera angle
+                _camAngle = _camAngle + 90.0f * M.Pi/180.0f * DeltaTime;
 
+                // Setup the camera 
+                RC.View = float4x4.CreateTranslation(0, 0, 50) * float4x4.CreateRotationY(_camAngle);
 
-           // Swap buffers: Show the contents of the backbuffer (containing the currently rendered frame) on the front buffer.
-            Present();
+                 // Animate the cube
+                 //ort
+                _cubeTransform.Translation = new float3(0, 1 * M.Sin(2 * TimeSinceStart), 0);
+                _cubeTransform2.Translation = new float3(0, 5 * M.Cos(2 * TimeSinceStart), 10);
+                _cubeTransform3.Translation = new float3(0, 5 * M.Sin(2 * TimeSinceStart), 20);
+
+                //skale 
+                _cubeTransform.Scale = new float3(1, M.Cos(2 * TimeSinceStart), 1);
+
+                //Rotation
+                _cubeTransform.Rotation = new float3(M.Cos(2 * TimeSinceStart), 1, 1);
+
+                // Render the scene on the current render context
+                _sceneRenderer.Render(RC);
+
+                // Swap buffers: Show the contents of the backbuffer (containing the currently rendered frame) on the front buffer.
+                Present();
         }
 
         public void SetProjectionAndViewport()
